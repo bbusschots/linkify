@@ -1,0 +1,31 @@
+{
+  "name": "@bartificer/linkify",
+  "version": "1.0.0",
+  "description": "An API and CLI for turning URLs into pretty links.",
+  "main": "lib.js",
+  "scripts": {
+    "generate-docs": "node_modules/.bin/jsdoc --configure jsdoc.conf.json",
+    "generate-docs-dev": "node_modules/.bin/jsdoc --configure jsdoc.conf.json --private --destination ./docs-dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bbusschots/linkify.git"
+  },
+  "author": "Bart Busschots T/A Bartificer Creations",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bbusschots/linkify/issues"
+  },
+  "homepage": "https://github.com/bbusschots/linkify#readme",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.2",
+    "mustache": "^2.3.0",
+    "request": "^2.83.0",
+    "request-promise-native": "^1.0.5",
+    "urijs": "^1.19.0"
+  },
+  "devDependencies": {
+    "@bbusschots/minami-bartificer": "^1.2.4-bartificer.2",
+    "jsdoc": "^3.5.5"
+  }
+}
