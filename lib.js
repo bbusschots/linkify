@@ -32,11 +32,7 @@ const perDomainPageDataToLinkDataTransmformers = {
  *
  * @private
  */
-const linkTemplates = {
-    html: '<a href="{{url}}" title="{{description}}">{{text}}</a>',
-    htmlNewTab: '<a href="{{url}}" title="{{description}}" target="_blank" rel="noopener">{{text}}</a>',
-    markdown: '[{{{text}}}]({{{url}}})'
-}
+const linkTemplates = {};
 
 /**
  * A class to represent data about a web page.
@@ -287,11 +283,11 @@ module.exports.LinkData = class{
         // initialise the properties
         
         /**
-         * The URL the link will go to.
+         * The URI.js object representing the URL the link will go to.
          *
          * @private
          */
-        this._url = '';
+        this._uri = URI();
         
         /**
          * The link text.
@@ -331,12 +327,21 @@ module.exports.LinkData = class{
     url(){
         // deal with set mode
         if(arguments.length){
-            this._url = String(arguments[0]);
+            this._uri = URI(String(arguments[0])).normalize();
             return this;
         }
         
         // deal with get mode
-        return this._url;
+        return this._uri.toString();
+    }
+    
+    /**
+     * The URL as a URI.js object.
+     * 
+     * @returns {Object}
+     */
+    uri(){
+        return this._uri.clone();
     }
     
     /**
@@ -384,13 +389,197 @@ module.exports.LinkData = class{
      * returns {object}
      */
     asPlainObject(){
-        return {
+        let ans = {
             url: this.url(),
             text: this.text(),
-            description: this.description()
+            description: this.description(),
+            uri: URI.parse(this._uri.toString())
         };
+        ans.uri.hasPath = ans.uri.path !== '/';
+        //console.log(ans);
+        return ans;
     }
 }
+
+/**
+ * A class to represent a link template.
+ */
+module.exports.LinkTemplate = class{
+    /**
+     * @param {string} templateString - a Moustache template string.
+     * @param {Array} [filters=[]] - an optional array of filter functions.
+     * Each element in the array should itself be an array where the first
+     * element is a string specifying which fields the filter should be applied
+     * to (one of `'all'`, `'url'`, `'text'`, or `'description'`), and the 
+     * second the filter function itself which should be a function that takes
+     * a single string as an argument and returns a filtered version of that
+     * string
+     */
+    constructor(templateString, filters){
+        // TO DO - add validation
+        
+        /**
+         * The Moustache template string.
+         *
+         * @private
+         * @type {string}
+         */
+        this._templateString = '';
+        this.templateString(templateString);
+        
+        /**
+         * The filter functions to be applied to the various fields.
+         *
+         * @private
+         * @type {object}
+         */
+        this._filters = {
+            all: [],
+            url: [],
+            text: [],
+            description: []
+        };
+        if(Array.isArray(filters)){
+            for(let f of filters){
+                if(Array.isArray(f)){
+                    this.addFilter(...f);
+                }
+            }
+        }
+    }
+    
+    /**
+     * A read and write accessor for the template string.
+     *
+     * @param {string} [templateString]
+     * @returns {(string|object)} When in *get* mode (passed no arguments), 
+     * returns the template string, when in *set* mode (passed a string as the
+     * first argument), returns a reference to self to facilitate function
+     * chaining.
+     */
+    templateString(){
+        // deal with set mode
+        if(arguments.length){
+            this._templateString = String(arguments[0]);
+            return this;
+        }
+        
+        // deal with get mode
+        return this._templateString;
+    }
+    
+    /**
+     * Add a filter to be applied to one or all fields.
+     *
+     * If an invalid args are passed, the function does not save the filter or
+     * throw an error, but it does log a warning.
+     *
+     * @param {string} fieldName - the special valie `'all'` or a field name.
+     * @param {function} filterFn - the filter function.
+     * @returns {object} Returns a reference to self to facilitate function
+     * chaining.
+     */
+    addFilter(fieldName, filterFn){
+        // make sure that args are at least plausibly valid
+        if(typeof fieldName !== 'string' || typeof filterFn !== 'function'){
+            console.warn('silently ignoring request to add filter due to invalid args');
+            return this;
+        }
+        
+        // make sure the field name is valid
+        if(!this._filters[fieldName]){
+            console.warn(`silently ignoring request to add filter for unknown field (${fieldName})`);
+            return this;
+        }
+        
+        // add the filter
+        this._filters[fieldName].push(filterFn);
+        
+        // return a reference to self
+        return this;
+    }
+    
+    /**
+     * A function get the filter functions that should be applied to any given
+     * field.
+     * 
+     * @param {string} fieldName - one of `'url'`, `'text'`, or
+     * `'description'`.
+     * @returns {function[]} returns an array of callbacks, which may be empty.
+     * an empty array is returned if an invalid field name is passed.
+     */
+    filtersFor(fieldName){
+        fieldName = String(fieldName);
+        let ans = [];
+        
+        if(this._filters[fieldName]){
+            if(fieldName !== 'all'){
+                for(let f of this._filters.all){
+                    ans.push(f);
+                }
+            }
+            for(let f of this._filters[fieldName]){
+                ans.push(f);
+            }
+        }
+        return ans;
+    }
+}
+
+/**
+ * Register a data transformer function for a given domain.
+ *
+ * @param {string} domain
+ * @param {function} transformerFn
+ */
+module.exports.registerTransformer = function(domain, transformerFn){
+    // TO DO - add validation
+    
+    let fqdn = String(domain);
+    if(!fqdn.match(/[.]$/)){
+        fqdn += '.';
+    }
+    perDomainPageDataToLinkDataTransmformers[fqdn] = transformerFn;
+};
+
+/**
+ * Get the data transformer function for a given domain.
+ *
+ * @param {string} domain
+ * @returns {function}
+ */
+module.exports.getTransformerForDomain = function(domain){
+    // TO DO - add validation
+    
+    let fqdn = String(domain);
+    if(!fqdn.match(/[.]$/)){
+        fqdn += '.';
+    }
+    
+    // return the most exact match
+    while(fqdn.match(/[.][^.]+[.]$/)){
+        if(perDomainPageDataToLinkDataTransmformers[fqdn]){
+            //console.log(`returning transformer for '${fqdn}'`);
+            return perDomainPageDataToLinkDataTransmformers[fqdn];
+        }
+        //console.log(`no transformer found for '${fqdn}'`);
+        fqdn = fqdn.replace(/^[^.]+[.]/, '');
+    }
+    //console.log('returning default transformer');
+    return perDomainPageDataToLinkDataTransmformers['.'];
+};
+
+/**
+ * Register a template.
+ *
+ * @param {string} name
+ * @param {module:@bartificer/linkify.LinkTemplate} template
+ */
+module.exports.registerTemplate = function(name, template){
+    // TO DO - add validation
+    
+    linkTemplates[name] = template;
+};
 
 /**
  * Fetch the page data for a given URL.
@@ -428,17 +617,35 @@ module.exports.fetchPageData = async function(url){
  *
  * @async
  * @param {string} url
+ * @param {string} [templateName='html']
  * @returns {string}
  */
-module.exports.generateLink = async function(url){
+module.exports.generateLink = async function(url, templateName){
     // TO DO - add validation
+    
+    let tplName = templateName && typeof templateName === 'string' ? templateName : 'html';
     
     // get the page data
     let pData = await this.fetchPageData(url);
     
     // transform the page data to link data
-    let lData = perDomainPageDataToLinkDataTransmformers['.'](pData);
+    let lData = module.exports.getTransformerForDomain(pData.uri().hostname())(pData);
     
     // render the link
-    return Mustache.render(linkTemplates.markdown, lData.asPlainObject());
-}
+    return Mustache.render(linkTemplates[tplName].templateString(), lData.asPlainObject());
+};
+
+//
+//=== Create and register the default templates ===============================
+//
+
+module.exports.registerTemplate(
+    'html',
+    new module.exports.LinkTemplate('<a href="{{{url}}}" title="{{description}}">{{text}}</a>')
+);
+module.exports.registerTemplate(
+    'htmlNewTab',
+    new module.exports.LinkTemplate('<a href="{{{url}}}" title="{{description}}" target="_blank" rel="noopener">{{text}}</a>')
+);
+let markdownTpl = new module.exports.LinkTemplate('[{{{text}}}]({{{url}}})');
+module.exports.registerTemplate('markdown', markdownTpl);

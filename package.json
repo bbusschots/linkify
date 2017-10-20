@@ -19,6 +19,7 @@
   "homepage": "https://github.com/bbusschots/linkify#readme",
   "dependencies": {
     "cheerio": "^1.0.0-rc.2",
+    "clipboardy": "^1.1.4",
     "mustache": "^2.3.0",
     "request": "^2.83.0",
     "request-promise-native": "^1.0.5",
