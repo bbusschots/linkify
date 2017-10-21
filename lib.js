@@ -2,6 +2,8 @@ const request = require('request-promise-native');
 const cheerio = require('cheerio');
 const URI = require('urijs');
 const Mustache = require('mustache');
+const vp = require('@maynoothuniversity/validate-params');
+const v = vp.validateJS();
 
 /**
  * A NodeJS module for transforming URLs into pretty links.
@@ -14,8 +16,9 @@ module.exports = {};
  * A mapping of domain names to data transformation functions.
  *
  * @private
+ * @type {Object.<FQDN, dataTransformer>}
  */
-const perDomainPageDataToLinkDataTransmformers = {
+const pageDataToLinkDataTransmformers = {
     '.' : function(pData){
         let text = pData.title();
         if(pData.h1s().length === 1){
@@ -25,34 +28,38 @@ const perDomainPageDataToLinkDataTransmformers = {
     }
 }
 
-// TO DO - create a class to represent templates.
-
 /**
  * The registered link templates.
  *
  * @private
+ * @type {Object.<templateName, module:@bartificer/linkify.LinkTemplate>}
  */
 const linkTemplates = {};
 
 /**
- * A class to represent data about a web page.
+ * Data about a web page – including its URL, title, and headings.
  */
 module.exports.PageData = class{
     /**
-     * @param {string} url - the URL this object will aggregate data about.
+     * This constructor throws a {@link ValidationError} unless a valid URL is passed.
+     *
+     * @param {URL} url - The page's full URL.
+     * @throws {ValidationError} A validation error is thrown if an invalid URL
+     * is passed.
      */
     constructor(url){
-        // initialise the properties
+        // TO DO - add validation
         
         /**
-         * The URI.js object that will represent the URL.
+         * The page's URL as a URI object.
          *
          * @private
+         * @type {URIObject}
          */
         this._uri = URI();
         
         /**
-         * The page title.
+         * The page's title.
          * 
          * @private
          * @type {string}
@@ -60,10 +67,11 @@ module.exports.PageData = class{
         this._title = '';
         
         /**
-         * The section headings on the page.
+         * The section headings on the page as arrays of strings indexed by
+         * `h1` and `h2`.
          * 
          * @private
-         * @type {{h1: string[], h2: string[]}}
+         * @type {plainObject}
          */
         this._headings = {
             h1: [],
@@ -75,14 +83,15 @@ module.exports.PageData = class{
     }
     
     /**
-     * A read and write accessor for getting and setting the URL this object
-     * is associated with.
+     * Get or set the URL.
      *
-     * @param {string} [url]
-     * @returns {(string|object)} When in *get* mode (passed no arguments), 
-     * returns a URL string, when in *set* mode (passed a URL string as the
-     * first argument), returns a reference to self to facilitate function
-     * chaining. 
+     * @param {URL} [url] - A new URL as a string.
+     * @returns {(string|module:@bartificer/linkify.PageData)} When in *get*
+     * mode (passed no parameters), returns a URL string, when in *set* mode 
+     * (passed a URL string as the first parameter), returns a reference to
+     * self to facilitate function chaining.
+     * @throws {ValidationError} A validation error is thrown if an argument
+     * is passed that's not a valid URL string.
      */
     url(){
         // TO DO - validate args
@@ -98,25 +107,25 @@ module.exports.PageData = class{
     }
     
     /**
-     * A read-only accessor to get the URL as a URI.js object.
+     * Get the URL as a URI.js object.
      *
-     * @returns {object}
+     * @returns {URIObject}
      */
     uri(){
         return this._uri.clone();
     }
     
     /**
-     * A read-only accessor to get the domain-part of the URL.
+     * Get the domain-part of the URL as a string.
      * 
-     * @returns {string}
+     * @returns {domainName}
      */
     domain(){
         return this._uri.hostname();
     }
     
     /**
-     * A read-only accessor to get the path-part of the URL.
+     * Get the path-part of the URL.
      *
      * @returns {string}
      */
@@ -125,12 +134,15 @@ module.exports.PageData = class{
     }
     
     /**
-     * A read and write accessor for the page title.
+     * Get or set the page title.
      * 
-     * @param {string} [title]
-     * @returns {(string|object)} When in *get* mode (passed no arguments), 
-     * returns the title, when in *set* mode (passed a string as the first 
-     * argument), returns a reference to self to facilitate function chaining.
+     * @param {string} [title] - the page's title as a string.
+     * @returns {(string|module:@bartificer/linkify.PageData)} When in *get*
+     * mode (passed no parameters), returns the title, when in *set* mode 
+     * (passed a string as the first parameter), returns a reference to self to
+     * facilitate function chaining.
+     * @throws {ValidationError} A validation error is thrown if an argument
+     * is passed that's not a string.
      */
     title(){
         // TO DO - validate args
@@ -146,9 +158,10 @@ module.exports.PageData = class{
     }
     
     /**
-     * A read-only accessor for the section headings on the page.
+     * Get the page's section headings as a plain object containing arrays of
+     * strings indexed by `h1` and `h2`.
      * 
-     * @returns {{h1: string[], h2: string[]}}.
+     * @returns {PlainObject}.
      */
     headings(){
         let ans = {
@@ -165,7 +178,7 @@ module.exports.PageData = class{
     }
     
     /**
-     * A read-only accessor for the top-level headings on the page (`h1` tags).
+     * Get the page's top-level headings (`h1` tags).
      *
      * @returns {string[]}
      */
@@ -178,7 +191,7 @@ module.exports.PageData = class{
     }
     
     /**
-     * A read-only accessor for the secondary headings on the page (`h2` tags).
+     * Get the page's secondary headings (`h2` tags).
      *
      * @returns {string[]}
      */
@@ -191,11 +204,12 @@ module.exports.PageData = class{
     }
     
     /**
-     * A read-only accessor for the first heading on the page.
+     * Get the text from the most important heading on the page. If the page
+     * has `h1` tags, the first one will be used, if not, the first `h2` tag
+     * will be used, and if there's none of those either, an empty string will
+     * be returned.
      * 
-     * @returns {string} The text of the first `h1` tag on the page, or if
-     * there are no `h1` tags, the text of the first `h2` tag, or, if there are
-     * no `h2` tags eiher, an empty string.
+     * @returns {string} Heading text as a string, or an empty string.
      */
     mainHeading(){
         if(this._headings.h1.length > 0){
@@ -211,7 +225,8 @@ module.exports.PageData = class{
      * Add a top-level heading.
      *
      * @param {string} h1Text
-     * @returns A reference to self to facilitate function chaning.
+     * @returns {module:@bartificer/linkify.PageData} A reference to self to 
+     * facilitate function chaning.
      */
     addTopLevelHeading(h1Text){
         // TO DO - add argument validation
@@ -223,7 +238,8 @@ module.exports.PageData = class{
      * Add a seconary heading.
      *
      * @param {string} h2Text
-     * @returns A reference to self to facilitate function chaning.
+     * @returns {module:@bartificer/linkify.PageData} A reference to self to 
+     * facilitate function chaning.
      */
     addSecondaryHeading(h2Text){
         // TO DO - add argument validation
@@ -269,23 +285,28 @@ module.exports.PageData.prototype.h1 = module.exports.PageData.prototype.addTopL
 module.exports.PageData.prototype.h2 = module.exports.PageData.prototype.addSecondaryHeading;
 
 /**
- * A class to represent data available for use when generating an output link
- * with a template.
+ * Data describing a link for use in link templates including a URL, link text,
+ * and a description.
  */
 module.exports.LinkData = class{
     /**
-     * @param {string} url - the URL the link will go to.
-     * @param {string} [text] - the link text, defaults to URL.
-     * @param {string} [description] - a description for the link, defaults to
+     * This constructor throws a {@link ValidationError} unless a valid URL is passed.
+     *
+     * @param {URL} url - The link's URL.
+     * @param {string} [text] - The link's text, defaults to the URL.
+     * @param {string} [description] - A description for the link, defaults to
      * the link text.
+     * @throws {ValidationError} A validation error is thrown if an invalid URL
+     * is passed.
      */
     constructor(url, text, description){
-        // initialise the properties
+        // TO DO - add validation
         
         /**
-         * The URI.js object representing the URL the link will go to.
+         * The link's URL as a URI.js object.
          *
          * @private
+         * @type {URIObject}
          */
         this._uri = URI();
         
@@ -316,13 +337,13 @@ module.exports.LinkData = class{
     }
     
     /**
-     * A read and write accessor for getting and setting the URL.
+     * Get or set the URL.
      *
-     * @param {string} [url]
-     * @returns {(string|object)} When in *get* mode (passed no arguments), 
-     * returns a URL string, when in *set* mode (passed a URL string as the
-     * first argument), returns a reference to self to facilitate function
-     * chaining. 
+     * @param {URL} [url] - A new URL as a string.
+     * @returns {(string|module:@bartificer/linkify.LinkData)} When in *get*
+     * mode (passed no parameters), returns a URL string, when in *set* mode
+     * (passed a URL string as the first parameter), returns a reference to 
+     * self to facilitate function chaining. 
      */
     url(){
         // deal with set mode
@@ -336,21 +357,22 @@ module.exports.LinkData = class{
     }
     
     /**
-     * The URL as a URI.js object.
+     * Get the URL as a URI.js object.
      * 
-     * @returns {Object}
+     * @returns {URIObject}
      */
     uri(){
         return this._uri.clone();
     }
     
     /**
-     * A read and write accessor for the link text.
+     * Get or set the link text.
      * 
-     * @param {string} [text]
-     * @returns {(string|object)} When in *get* mode (passed no arguments), 
-     * returns the link text, when in *set* mode (passed a string as the first
-     * argument), returns a reference to self to facilitate function chaining.
+     * @param {string} [text] - New link text.
+     * @returns {(string|module:@bartificer/linkify.LinkData)} When in *get*
+     * mode (passed no parameters), returns the link text, when in *set* mode
+     * (passed a string as the first parameter), returns a reference to self to
+     * facilitate function chaining.
      */
     text(){
         // deal with set mode
@@ -364,13 +386,13 @@ module.exports.LinkData = class{
     }
     
     /**
-     * A read and write accessor for the link description.
+     * Get or set the link description.
      * 
      * @param {string} [description]
-     * @returns {(string|object)} When in *get* mode (passed no arguments), 
-     * returns the link description, when in *set* mode (passed a string as the
-     * first argument), returns a reference to self to facilitate function
-     * chaining.
+     * @returns {(string|module:@bartificer/linkify.LinkData)} When in *get* 
+     * mode (passed no parameters), returns the link description, when in *set*
+     * mode (passed a string as the first parameter), returns a reference to 
+     * self to facilitate function chaining.
      */
     description(){
         // deal with set mode
@@ -384,9 +406,25 @@ module.exports.LinkData = class{
     }
     
     /**
-     * Get the link data as a plain object.
+     * Get the link data as a plain object of the form:
+     * ```
+     * {
+     *     url: 'http://www.bartificer.net/',
+     *     text: 'the link text',
+     *     description: 'the link description',
+     *     uri: {
+     *         hostname: 'www.bartificer.net',
+     *         path: '/',
+     *         hasPath: false
+     *     }
+     * }
+     * ```
+     *
+     * Note that the `uri` could contain more fields - it's initialised with
+     * output from the `URI.parse()` function from the `URI` module.
      * 
-     * returns {object}
+     * @returns {plainObject}
+     * @see {@link https://medialize.github.io/URI.js/docs.html#static-parse}
      */
     asPlainObject(){
         let ans = {
@@ -402,18 +440,24 @@ module.exports.LinkData = class{
 }
 
 /**
- * A class to represent a link template.
+ * A link template. The primary component of a template is a Moustache template
+ * string.
  */
 module.exports.LinkTemplate = class{
     /**
-     * @param {string} templateString - a Moustache template string.
-     * @param {Array} [filters=[]] - an optional array of filter functions.
+     * This constructor throws a {@link ValidationError} unless a template
+     * string is passed.
+     *
+     * @param {templateString} templateString - A Moustache template string.
+     * @param {Array} [filters=[]] - An optional array of filter functions.
      * Each element in the array should itself be an array where the first
      * element is a string specifying which fields the filter should be applied
      * to (one of `'all'`, `'url'`, `'text'`, or `'description'`), and the 
      * second the filter function itself which should be a function that takes
      * a single string as an argument and returns a filtered version of that
      * string
+     * @throws {ValidationError} A validation error is thrown unless a template
+     * string is passed.
      */
     constructor(templateString, filters){
         // TO DO - add validation
@@ -422,16 +466,21 @@ module.exports.LinkTemplate = class{
          * The Moustache template string.
          *
          * @private
-         * @type {string}
+         * @type {templateString}
          */
         this._templateString = '';
         this.templateString(templateString);
         
         /**
-         * The filter functions to be applied to the various fields.
+         * The filter functions to be applied to the various fields as a plain
+         * object of arrays of {@filterFunction} callbacks indexed by:
+         * * `all` — filters to be applied to all fields.
+         * * `url` — filters to be applied to just the URL.
+         * * `text` — filters to be applied just the link text.
+         * * `description` — filters to be applied just the link description.
          *
          * @private
-         * @type {object}
+         * @type {Object.<string, filterFunction>}
          */
         this._filters = {
             all: [],
@@ -449,13 +498,14 @@ module.exports.LinkTemplate = class{
     }
     
     /**
-     * A read and write accessor for the template string.
+     * Get or set the template string.
      *
-     * @param {string} [templateString]
-     * @returns {(string|object)} When in *get* mode (passed no arguments), 
-     * returns the template string, when in *set* mode (passed a string as the
-     * first argument), returns a reference to self to facilitate function
-     * chaining.
+     * @param {templateString} [templateString] - A new Moustache template
+     * string.
+     * @returns {(string|module:@bartificer/linkify.LinkTemplate)} When in
+     * *get* mode (passed no parameters), returns the template string, when in
+     * *set* mode (passed a string as the first parameter), returns a reference
+     * to self to facilitate function chaining.
      */
     templateString(){
         // deal with set mode
@@ -474,10 +524,11 @@ module.exports.LinkTemplate = class{
      * If an invalid args are passed, the function does not save the filter or
      * throw an error, but it does log a warning.
      *
-     * @param {string} fieldName - the special valie `'all'` or a field name.
-     * @param {function} filterFn - the filter function.
-     * @returns {object} Returns a reference to self to facilitate function
-     * chaining.
+     * @param {string} fieldName - One of `'all'`, `'url'`, `'text'`, or
+     * `'description'`.
+     * @param {filterFunction} filterFn - the filter function.
+     * @returns {module:@bartificer/linkify.LinkTemplate} Returns a reference
+     * to self to facilitate function chaining.
      */
     addFilter(fieldName, filterFn){
         // make sure that args are at least plausibly valid
@@ -505,8 +556,8 @@ module.exports.LinkTemplate = class{
      * 
      * @param {string} fieldName - one of `'url'`, `'text'`, or
      * `'description'`.
-     * @returns {function[]} returns an array of callbacks, which may be empty.
-     * an empty array is returned if an invalid field name is passed.
+     * @returns {filterFunction[]} returns an array of callbacks, which may be
+     * empty. An empty array is returned if an invalid field name is passed.
      */
     filtersFor(fieldName){
         fieldName = String(fieldName);
@@ -529,8 +580,11 @@ module.exports.LinkTemplate = class{
 /**
  * Register a data transformer function for a given domain.
  *
- * @param {string} domain
- * @param {function} transformerFn
+ * @param {domainName} domain - The domain for which this transformer should be
+ * used.
+ * @param {dataTransformer} transformerFn - The data transformer callback.
+ * @throws {ValidationError} A validation error is thrown if either parameter
+ * is missing or invalid.
  */
 module.exports.registerTransformer = function(domain, transformerFn){
     // TO DO - add validation
@@ -539,14 +593,23 @@ module.exports.registerTransformer = function(domain, transformerFn){
     if(!fqdn.match(/[.]$/)){
         fqdn += '.';
     }
-    perDomainPageDataToLinkDataTransmformers[fqdn] = transformerFn;
+    pageDataToLinkDataTransmformers[fqdn] = transformerFn;
 };
 
 /**
  * Get the data transformer function for a given domain.
  *
- * @param {string} domain
- * @returns {function}
+ * Note that domains are searched from the subdomain up. For example, if passed
+ * the domain `www.bartificer.net` the function will first look for a
+ * transformer for the domain `www.bartificer.net`, if there's no transformer
+ * registered for that domain it will look for a transformer for the domain
+ * `bartificer.net`, if there's no transformer for that domain either it will
+ * return the default transformer.
+ *
+ * @param {domainName} domain - The domain to get the data transformer for.
+ * @returns {dataTransformer}
+ * @throws {ValidationError} A validation error is thrown unless a valid domain
+ * name is passed.
  */
 module.exports.getTransformerForDomain = function(domain){
     // TO DO - add validation
@@ -558,22 +621,24 @@ module.exports.getTransformerForDomain = function(domain){
     
     // return the most exact match
     while(fqdn.match(/[.][^.]+[.]$/)){
-        if(perDomainPageDataToLinkDataTransmformers[fqdn]){
+        if(pageDataToLinkDataTransmformers[fqdn]){
             //console.log(`returning transformer for '${fqdn}'`);
-            return perDomainPageDataToLinkDataTransmformers[fqdn];
+            return pageDataToLinkDataTransmformers[fqdn];
         }
         //console.log(`no transformer found for '${fqdn}'`);
         fqdn = fqdn.replace(/^[^.]+[.]/, '');
     }
     //console.log('returning default transformer');
-    return perDomainPageDataToLinkDataTransmformers['.'];
+    return pageDataToLinkDataTransmformers['.'];
 };
 
 /**
- * Register a template.
+ * Register a link template.
  *
- * @param {string} name
+ * @param {templateName} name
  * @param {module:@bartificer/linkify.LinkTemplate} template
+ * @throws {ValidationError} A validation error is thrown unless both a valid
+ * name and template object are passed.
  */
 module.exports.registerTemplate = function(name, template){
     // TO DO - add validation
@@ -585,8 +650,10 @@ module.exports.registerTemplate = function(name, template){
  * Fetch the page data for a given URL.
  *
  * @async
- * @param {string} url
+ * @param {URL} url
  * @returns {module:@bartificer/linkify.PageData}
+ * @throws {ValidationError} A validation error is thrown unless a valid URL is
+ * passed.
  */
 module.exports.fetchPageData = async function(url){
     // TO DO - add validation
@@ -616,9 +683,11 @@ module.exports.fetchPageData = async function(url){
  * Generate a link given a URL.
  *
  * @async
- * @param {string} url
- * @param {string} [templateName='html']
+ * @param {URL} url
+ * @param {templateName} [templateName='html']
  * @returns {string}
+ * @throws {ValidationError} A validation error is thrown unless a valid URL is
+ * passed.
  */
 module.exports.generateLink = async function(url, templateName){
     // TO DO - add validation
@@ -634,6 +703,8 @@ module.exports.generateLink = async function(url, templateName){
     // render the link
     return Mustache.render(linkTemplates[tplName].templateString(), lData.asPlainObject());
 };
+
+// TO DO - document the default templates
 
 //
 //=== Create and register the default templates ===============================

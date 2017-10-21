@@ -1,0 +1,72 @@
+//
+//=== Type Definitions ========================================================
+//
+
+/**
+ * A plain JavaScript object as defined by the `.isPlainObject()` function from
+ * the `@maynoothuniversity/validate-params` module.
+ * @typedef {Object} plainObject
+ * @see {@link https://bbusschots-mu.github.io/validateParams.js/module-validateParams.html#.isPlainObject}
+ */
+
+/**
+ * A validation error as thrown by the `@maynoothuniversity/validate-params`
+ * module.
+ * @typedef {Error} ValidationError
+ * @see {@link https://bbusschots-mu.github.io/validateParams.js/module-validateParams.ValidationError.html}
+ */
+
+/**
+ * A URI.js object representing a URL.
+ * @typedef {Object} URIObject
+ * @see {@link https://github.com/medialize/URI.js}
+ */
+
+/**
+ * A Moustache template string.
+ * @typedef {string} templateString
+ * @see {@link https://mustache.github.io}
+ * @see {@link http://coenraets.org/blog/2011/12/tutorial-html-templates-with-mustache-js/}
+ */
+
+/**
+ * A valid `http://` or `https://` URL as a string.
+ * @typedef {string} URL
+ */
+
+/**
+ * A domain name in the most commonly used format, i.e. without the optional
+ * trailing `.`.
+ * @typedef {string} domainName
+ */
+
+/**
+ * A fully qualified domain name with a trailing `.` as a string.
+ * @private
+ * @typedef {string} FQDN
+ */
+
+/**
+ * A template name. Must be a string at least one character long consisting of
+ * only letters, digits, dashes, underscores and periods.
+ * @typedef {string} templateName
+ */
+
+//
+//=== Callback Definitions ====================================================
+//
+
+/**
+ * A function that takes page data and transforms it into link data.
+ * @callback dataTransformer
+ * @param {module:@bartificer/linkify.PageData}
+ * @returns {module:@bartificer/linkify.LinkData}
+ */
+
+/**
+ * A function for altering a piece of link data, e.g. for transforming the
+ * link text to title case.
+ * @callback filterFunction
+ * @param {string} str - The input to the filter.
+ * @returns {string} The output from the filter.
+ */

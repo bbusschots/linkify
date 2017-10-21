@@ -1,6 +1,6 @@
 {
     "source" : {
-        "include": ["./lib.js"]
+        "include": ["./lib.js", "./docs-globals.jsdoc"]
     },
     "opts" : {
         "destination" : "./docs",
