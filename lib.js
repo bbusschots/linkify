@@ -24,7 +24,7 @@ const pageDataToLinkDataTransmformers = {
         if(pData.h1s().length === 1){
             text = pData.mainHeading();
         }
-        return new module.exports.LinkData(pData.url(), text);
+        return new module.exports.LinkData(pData.url(), text.trim());
     }
 }
 
