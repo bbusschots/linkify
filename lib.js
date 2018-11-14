@@ -37,7 +37,7 @@ const pageDataToLinkDataTransmformers = {
 const linkTemplates = {};
 
 /**
- * Data about a web page – including its URL, title, and headings.
+ * Data about a web page - including its URL, title, and headings.
  */
 module.exports.PageData = class{
     /**
@@ -474,10 +474,10 @@ module.exports.LinkTemplate = class{
         /**
          * The filter functions to be applied to the various fields as a plain
          * object of arrays of {@filterFunction} callbacks indexed by:
-         * * `all` — filters to be applied to all fields.
-         * * `url` — filters to be applied to just the URL.
-         * * `text` — filters to be applied just the link text.
-         * * `description` — filters to be applied just the link description.
+         * * `all` - filters to be applied to all fields.
+         * * `url` - filters to be applied to just the URL.
+         * * `text` - filters to be applied just the link text.
+         * * `description` - filters to be applied just the link description.
          *
          * @private
          * @type {Object.<string, filterFunction>}
@@ -667,12 +667,12 @@ module.exports.fetchPageData = async function(url){
         resolveWithFullResponse: true
     });
     let $ = cheerio.load(webDownloadResponse.body);
-    ans.title($('title').text());
+    ans.title($('title').text().trim());
     $('h1').each(function(){
-        ans.h1($(this).text());
+        ans.h1($(this).text().trim());
     });
     $('h2').each(function(){
-        ans.h2($(this).text());
+        ans.h2($(this).text().trim());
     });
     
     // return the answer
@@ -702,6 +702,28 @@ module.exports.generateLink = async function(url, templateName){
     
     // render the link
     return Mustache.render(linkTemplates[tplName].templateString(), lData.asPlainObject());
+};
+
+//
+//=== Define useful utility functions ========================================
+//
+
+/**
+ * A collection of utility functions that may be helpful when writting
+ * data transformer functions.
+ *
+ * @type {Object<string, function>}
+ */
+module.exports.util = {
+    /**
+     * Strip the query string from a URL.
+     *
+     * @param {string} url
+     * @return {string}
+     */
+    stripQueryString: function(url){
+        return URI(url).query('').toString();
+    }
 };
 
 // TO DO - document the default templates
