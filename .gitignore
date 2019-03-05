@@ -61,3 +61,5 @@ typings/
 test\.js
 
 docs-dev/
+
+*.komodoproject
