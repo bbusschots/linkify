@@ -24,7 +24,7 @@
     "mustache": "^2.3.2",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.7",
-    "urijs": "^1.19.1"
+    "urijs": "^1.19.8"
   },
   "devDependencies": {
     "@bbusschots/minami-bartificer": "^1.2.4-bartificer.2",
