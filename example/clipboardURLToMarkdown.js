@@ -1,23 +1,14 @@
-//const request = require('request-promise-native');
-//const cheerio = require('cheerio');
-//
-//request({
-//    uri: 'https://arstechnica.com/information-technology/2017/10/severe-flaw-in-wpa2-protocol-leaves-wi-fi-traffic-open-to-eavesdropping/',
-//    method: 'GET',
-//    resolveWithFullResponse: true
-//}).then(function(response) {
-//    console.log(Object.keys(response));
-//    
-//    let $ = cheerio.load(response.body);
-//    console.log($('title').text());
-//});
+// import Linkify Lib
+const linkify = require('../lib.js');
 
+// import 3rd-party library for interacting with the clipboard
 const clipboardy = require('clipboardy');
-const linkify = require('./lib.js');
 
+// define a custom link template and register it
 const mdTitleTpl = new linkify.LinkTemplate('[{{{text}}} — {{{uri.hostname}}}{{#uri.hasPath}}/…{{/uri.hasPath}}]({{{url}}})');
 linkify.registerTemplate('md-title', mdTitleTpl);
 
+// define & register custom transformers for domains that need them
 linkify.registerTransformer('intego.com', function(pData){
     return new linkify.LinkData(pData.url(), pData.title().replace(' | The Mac Security Blog', ''));
 });
@@ -47,9 +38,10 @@ linkify.registerTransformer('daringfireball.net', function(pData){
     return new linkify.LinkData(pData.url(), pData.title().replace(/^Daring Fireball:[ ]/, ''));
 });
 
-//let testURL = 'https://www.arstechnica.com/information-technology/2017/10/severe-flaw-in-wpa2-protocol-leaves-wi-fi-traffic-open-to-eavesdropping/';
-//let testURL = 'https://www.arstechnica.com';
+// read the URL from the clipboard
 let testURL = clipboardy.readSync();
+
+// try generate the formatted link from the URL
 linkify.generateLink(testURL, 'md-title').then(function(d){
     console.log(d);
 });
