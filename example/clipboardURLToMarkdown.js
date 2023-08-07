@@ -12,6 +12,9 @@ linkify.registerTemplate('md-title', mdTitleTpl);
 linkify.registerTransformer('9to5mac.com', function(pData){
     return new linkify.LinkData(pData.url(), pData.mainHeading());
 });
+linkify.registerTransformer('appleinsider.com', function(pData){
+    return new linkify.LinkData(linkify.util.stripUTMParameters(pData.url()), pData.mainHeading());
+});
 linkify.registerTransformer('bloomberg.com', function(pData){
     return new linkify.LinkData(pData.url(), pData.title().replace(' - Bloomberg', ''));
 });
@@ -22,19 +25,31 @@ linkify.registerTransformer('daringfireball.net', function(pData){
     return new linkify.LinkData(pData.url(), pData.title().replace(/^Daring Fireball:[ ]/, ''));
 });
 linkify.registerTransformer('intego.com', function(pData){
-    return new linkify.LinkData(pData.url(), pData.title().replace(' | The Mac Security Blog', ''));
+    return new linkify.LinkData(pData.url(), pData.title().replace(' - The Mac Security Blog', ''));
 });
 linkify.registerTransformer('krebsonsecurity.com', function(pData){
     return new linkify.LinkData(pData.url(), pData.title().replace(' – Krebs on Security', ''));
 });
 linkify.registerTransformer('macobserver.com', function(pData){
-    return new linkify.LinkData(pData.url(), pData.mainHeading());
+    return new linkify.LinkData(linkify.util.stripQueryString(pData.url()), pData.mainHeading());
 });
 linkify.registerTransformer('macstories.net', function(pData){
     return new linkify.LinkData(pData.url(), pData.title().replace(' - MacStories', ''));
 });
 linkify.registerTransformer('nakedsecurity.sophos.com', function(pData){
     return new linkify.LinkData(pData.url(), pData.title().replace(' – Naked Security', ''));
+});
+linkify.registerTransformer('overcast.fm', function(pData){
+    // strip Overcast append, split on em-dash to replace with n-dash and get podcast name
+    let textParts =  pData.title().replace(' — Overcast', '').split('—');
+    let podcastName = textParts.pop();
+
+    // re-assemble the text
+    let linkText = podcastName.trim() + ': ' + textParts.join(' – ').replace(/[ ]+/g, ' ').replace(':', '-').trim();
+    return new linkify.LinkData(pData.url(), linkText);
+});
+linkify.registerTransformer('sixcolors.com', function(pData){
+    return new linkify.LinkData(pData.url(), pData.mainHeading());
 });
 linkify.registerTransformer('theverge.com', function(pData){
     return new linkify.LinkData(pData.url(), pData.title().replace(/[ ][-][ ]The[ ]Verge.*$/, ''));
