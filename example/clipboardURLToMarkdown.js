@@ -19,7 +19,8 @@ linkify.registerTransformer('bloomberg.com', function(pData){
     return new linkify.LinkData(pData.url(), pData.title().replace(' - Bloomberg', ''));
 });
 linkify.registerTransformer('cultofmac.com', function(pData){
-    return new linkify.LinkData(pData.url(), pData.secondaryHeadings()[1]);
+    // return new linkify.LinkData(pData.url(), pData.secondaryHeadings()[1]);
+    return new linkify.LinkData(pData.url(), pData.mainHeading());
 });
 linkify.registerTransformer('daringfireball.net', function(pData){
     return new linkify.LinkData(pData.url(), pData.title().replace(/^Daring Fireball:[ ]/, ''));
