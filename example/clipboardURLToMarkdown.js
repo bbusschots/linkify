@@ -2,7 +2,7 @@
 const linkify = require('../lib.js');
 
 // import 3rd-party library for interacting with the clipboard
-const clipboardy = require('clipboardy');
+const clipboardy = require('node-clipboardy');
 
 // define a custom link template and register it
 const mdTitleTpl = new linkify.LinkTemplate('[{{{text}}} — {{{uri.hostname}}}{{#uri.hasPath}}/…{{/uri.hasPath}}]({{{url}}})');

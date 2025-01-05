@@ -19,15 +19,15 @@
   "homepage": "https://github.com/bbusschots/linkify#readme",
   "dependencies": {
     "@maynoothuniversity/validate-params": "^1.2.3",
-    "cheerio": "^1.0.0-rc.10",
-    "clipboardy": "^1.2.3",
-    "mustache": "^2.3.2",
+    "cheerio": "^1.0.0",
+    "mustache": "^4.2.0",
+    "node-clipboardy": "^1.0.3",
     "request": "^2.88.2",
     "request-promise-native": "^1.0.9",
     "urijs": "^1.19.10"
   },
   "devDependencies": {
     "@bbusschots/minami-bartificer": "^1.2.4-bartificer.2",
-    "jsdoc": "^3.6.10"
+    "jsdoc": "^4.0.4"
   }
 }
