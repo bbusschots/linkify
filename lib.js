@@ -1,4 +1,4 @@
-const request = require('request-promise-native');
+const fetch = require('node-fetch').default;
 const cheerio = require('cheerio');
 const URI = require('urijs');
 const Mustache = require('mustache');
@@ -661,12 +661,9 @@ module.exports.fetchPageData = async function(url){
     let ans = new this.PageData(url);
     
     // then try load the contents form the web
-    let webDownloadResponse = await request({
-        uri: url,
-        method: 'GET',
-        resolveWithFullResponse: true
-    });
-    let $ = cheerio.load(webDownloadResponse.body);
+    let webDownloadResponse = await fetch(url);
+    webDownloadResponseBody = await webDownloadResponse.text();
+    let $ = cheerio.load(webDownloadResponseBody);
     ans.title($('title').text().trim());
     $('h1').each(function(){
         ans.h1($(this).text().trim());
