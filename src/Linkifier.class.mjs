@@ -68,7 +68,7 @@ export class Linkifier {
      * Paths are coerced to strings with `String()` and relative paths are resolved relative to the user's current working directory.
      * @param {string} [configPath] — an optional path to import the configuration from.
      * @returns {configurationObject} if no path is passed, and there is no module in the default location, an empty object will be returned.
-     * @throws {TypeError} A TypeError is thrown if the loaded module contains a key named `linfifier` that is not an instance of the `Linkifier` class, or, a key named `options` that is not an object.
+     * @throws {TypeError} A TypeError is thrown if the loaded module does not export an object as `default`, the exported object contains a key named `linfifier` that is not an instance of the `Linkifier` class, or, a key named `options` that is not an object.
      * @throws {Error} An Error is thrown if a path is passed but a module can't be imported from it.
      * @see {@link module:defaults.configFilename} for the default file name used.
      */
@@ -110,13 +110,22 @@ export class Linkifier {
             utilities.debug(`attempting to import configuration module from: ${configPath}`);
             //rawConfig = (await import(configPath)).default; // generates a webpack warning
             rawConfig = (await __non_webpack_require__(configPath)).default;
-            utilities.debug(`${green('OK')} — config imported`);
+            if(typeof rawConfig == 'undefined'){
+                utilities.debug(`${red('FAILED')} module does not provide an export named 'default'`);
+                throw new Error(`failed to import configuration module from '${configPath}', does not provide an export named 'default'`);
+            }
+            utilities.debug(`${green('OK')} — configuration module imported`);
         } catch (err) {
             utilities.debug(`${red('FAILED')} with error: ${err.message}`);
-            throw new Error('Failed to import configuration module', { cause: err });
+            throw new Error('failed to import configuration module', { cause: err });
         }
     
         // extract and verify the expected information
+        utilities.debug('validating imported configuration module');
+        if(typeof rawConfig != 'object'){
+            utilities.debug(`${red('FAILED')} 'default' import does not provide an object`);
+            throw new TypeError(`'default' export of configuration module loaded from '${configPath}' is not an object`);
+        }
         const config = {
             linkifier: null,
             options: {}
@@ -125,14 +134,21 @@ export class Linkifier {
             if(rawConfig.linkifier instanceof Linkifier){
                 config.linkifier = rawConfig.linkifier;
             } else {
-                throw new TypeError("Config key 'linkifier' must be an instance of the Linkifier class");
+                utilities.debug(`${red('FAILED')} configuration key 'linkifier' is not an instance of Linkifer`);
+                throw new TypeError("Configuration key 'linkifier' must be an instance of the Linkifier class");
             }
         } else {
             config.linkifier = new Linkifier();
         }
         if(rawConfig.hasOwnProperty('options')){
-            config.options = { ...rawConfig.options };
+            if(typeof config.options == 'object'){
+                config.options = { ...rawConfig.options };
+            } else {
+                utilities.debug(`${red('FAILED')} configuration key 'options' is not an object`);
+                throw new TypeError("Configuration key 'options' must be an object");
+            }
         }
+        utilities.debug(`${green('OK')} — imported configuration is valid`);
     
         // return the imported configuration
         return config;

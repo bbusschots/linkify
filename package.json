@@ -1,6 +1,6 @@
 {
   "name": "@bartificer/linkify",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "An MIT-licensed command line app and ES6 Javascript module for generating enriched links in any format from a URL.",
   "publishConfig": {
     "access": "public"
