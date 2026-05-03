@@ -514,6 +514,16 @@ export class Linkifier {
         }
         let $ = cheerio.load(webDownloadResponseBody);
         ans.title = $('title').text().trim();
+        const metadata = PageData.emptyPageMetadataObject;
+        const rawMetadata = {};
+        $('meta[name]').each(function(){
+            const $meta = $(this);
+            rawMetadata[$meta.attr('name')] = $meta.attr('content');
+        });
+        for(const metadataKey of Object.keys(metadata)){
+            metadata[metadataKey] = rawMetadata.hasOwnProperty(metadataKey) ? rawMetadata[metadataKey] : '';
+        }
+        ans.metadata = metadata;
         $('h1').each(function(){
             ans.h1($(this).text().trim());
         });

@@ -60,8 +60,9 @@
  * @typedef {Object} plainPageInformationObject
  * @property {string} url - the page's URL.
  * @property {string} title - the page's title.
- * @property {string[]} topLevelHeadings - the text from the page's `h1` tags.
- * @property {string[]} secondaryHeadings - text from the page's `h2` tags.
+ * @property {pageMetadataObject} metadata - the metadata extracted from the `<meta>` tags in the page's `<head>` tag.
+ * @property {string[]} topLevelHeadings - the text from the page's `<h1>` tags.
+ * @property {string[]} secondaryHeadings - text from the page's `<h2>` tags.
  * @property {string} mainHeading - the text from the most semantically important heading that exists in the page.
  * @property {Object.<string, string>} extraFields - any extra fields extracted from the page source.
  * @property {Object} uri - the URL's components

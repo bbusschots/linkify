@@ -19,6 +19,21 @@ import {default as URI} from 'urijs';
  */
 export class PageData {
     /**
+     * A new empty page metadata object.
+     * @readonly
+     * @type {pageMetadataObject}
+     */
+    static get emptyPageMetadataObject(){
+        return {
+            author: '',
+            creator: '',
+            description: '',
+            keywords: [],
+            publisher: ''
+        };
+    }
+
+    /**
      * @param {string} url - The page's full URL.
      */
     constructor(url){
@@ -46,13 +61,7 @@ export class PageData {
          * @private
          * @type {pageMetadataObject}
          */
-        this._metadata = {
-            author: '',
-            creator: '',
-            description: '',
-            keywords: [],
-            publisher: ''
-        };
+        this._metadata = PageData.emptyPageMetadataObject;
         
         /**
          * The section headings on the page as arrays of strings indexed by
@@ -130,6 +139,10 @@ export class PageData {
     /**
      * The page's metadata from the page's HTML header.
      * 
+     * When getting this property a shallow clone of the internal metadata fields object is returned.
+     * 
+     * When setting this property a comma-separated string can be passed for the keywords. All values passed are coerced to strings with `String()` before being written to the internal data structure.
+     * 
      * Note that reading this property produces a shallow clone of the internal metadata fields object, and that the values set for metadata fields are coerced to strings with `String(value)`.
      * @type {pageMetadataObject}
      * @throws {TypeError} if an attempt is made to set this property to a non-object value.
@@ -148,7 +161,9 @@ export class PageData {
             this._metadata.author = metadata.author ? String(metadata.author) : '';
             this._metadata.creator = metadata.creator ? String(metadata.creator) : '';
             this._metadata.description = metadata.description ? String(metadata.description) : '';
-            if(metadata.keywords && Array.isArray(metadata.keywords)){
+            if(typeof metadata.keywords == 'string' && metadata.keywords.length > 0){
+                this._metadata.keywords = metadata.keywords.split(/,[ ]*/); // split keyword lists on commas
+            } else if(metadata.keywords && Array.isArray(metadata.keywords)){
                 this._metadata.keywords = [...metadata.keywords.map((keyword) => { String(keyword) })];
             } else {
                 this._metadata.keywords = [];
@@ -310,6 +325,7 @@ export class PageData {
         let ans = {
             url: this.url,
             title: this.title,
+            metadata: this.metadata,
             topLevelHeadings: this.topLevelHeadings,
             secondaryHeadings: this.secondaryHeadings,
             mainHeading: this.mainHeading,
