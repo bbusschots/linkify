@@ -130,8 +130,10 @@ export const speciallyCapitalisedWords = [
     'III',
     'IV',
     'FCC',
+    'FDA',
 
     // tech jargon
+    '3D',
     'iOS',
     'macOS',
     'iPhone',
@@ -149,7 +151,9 @@ export const speciallyCapitalisedWords = [
     'AirPods',
     'MacBook',
     'MacBooks',
+    'iMessage',
     'iTunes',
+    'GarageBand',
     'WWDC',
     'XDR',
     'XProtect',
