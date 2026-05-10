@@ -134,6 +134,9 @@ export const speciallyCapitalisedWords = [
 
     // tech jargon
     '3D',
+    'DM',
+    'DMs',
+    'SMS',
     'iOS',
     'macOS',
     'iPhone',
