@@ -137,6 +137,7 @@ linkifier.registerTransformer('social.bartificer.ie', transformers.mastodonServe
 linkifier.registerTransformer('cultofmac.com', transformers.mainHeading);
 linkifier.registerTransformer('daringfireball.net', (pData) => transformers.titleMinusPrefix(pData, 'Daring Fireball: '));
 linkifier.registerTransformer('intego.com', (pData) => transformers.titleMinusPostscript(pData, ' | Intego'));
+linkifier.registerTransformer('isc.sans.edu', (pData) => { return new LinkData(pData.url, pData.h1s[1]); });
 linkifier.registerTransformer('krebsonsecurity.com', (pData) => transformers.titleMinusPostscript(pData, ' – Krebs on Security'));
 linkifier.registerTransformer('macstories.net', (pData) => transformers.titleMinusPostscript(pData, ' - MacStories'));
 linkifier.registerTransformer('nakedsecurity.sophos.com', (pData) => transformers.titleMinusPostscript(pData, ' – Naked Security'));
