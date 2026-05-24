@@ -136,6 +136,7 @@ export const speciallyCapitalisedWords = [
     '3D',
     'DM',
     'DMs',
+    'RCS',
     'SMS',
     'iOS',
     'macOS',
