@@ -140,6 +140,8 @@ export const speciallyCapitalisedWords = [
     'SMS',
     'iOS',
     'macOS',
+    'iCloud',
+    'PC',
     'iPhone',
     'iPhones',
     'iPad',
@@ -151,7 +153,9 @@ export const speciallyCapitalisedWords = [
     'iPadOS',
     'watchOS',
     'tvOS',
+    'visionOS',
     'CarPlay',
+    'AirDrop',
     'AirPods',
     'MacBook',
     'MacBooks',
@@ -167,5 +171,6 @@ export const speciallyCapitalisedWords = [
     'LinkedIn',
     'ChatGPT',
     'OpenAI',
-    'GPT'
+    'GPT',
+    'EV'
 ];
