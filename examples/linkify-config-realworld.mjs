@@ -38,6 +38,8 @@ linkifier.registerTemplate('md-apr', new LinkTemplate(
     ]
 ));
 linkifier.registerDefaultTemplateMapping('apple.com', 'md-apr');
+// add exception for Apple's security blog
+linkifier.registerDefaultTemplateMapping('security.apple.com', 'md-bartificer');
 
 // register a special Markdown template for XKCD cartoons and make it the default for XKCD's domain
 linkifier.registerTemplate('md-xkcd', new LinkTemplate(
@@ -149,6 +151,10 @@ linkifier.registerTransformer('overcast.fm', function(pData){
     // re-assemble the text
     let linkText = podcastName.trim() + ': ' + textParts.join(' – ').replace(/[ ]+/g, ' ').replace(':', '-').trim();
     return new LinkData(pData.url, linkText);
+});
+linkifier.registerTransformer('reuters.com', (pData) => {
+    // strip the trailing date from the title
+    return new LinkData(pData.url, pData.title.replace(/[ ]\d{4}[ ]\d{2}[ ]\d{2}$/, '').trim());
 });
 linkifier.registerTransformer('sixcolors.com', transformers.mainHeading);
 linkifier.registerTransformer('theverge.com', transformers.mainHeading);
