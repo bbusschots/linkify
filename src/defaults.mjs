@@ -131,6 +131,13 @@ export const speciallyCapitalisedWords = [
     'IV',
     'FCC',
     'FDA',
+    'CEO',
+    'CFO',
+    'COO',
+    'CTO',
+    'CIO',
+    'CMO',
+    'CISO',
 
     // tech jargon
     '3D',
